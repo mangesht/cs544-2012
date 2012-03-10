@@ -36,10 +36,10 @@ double calc_next_value(double t0, double x0, double h)
     double k4;
     
     // Calcualte k1 , k2 , k3 , k4 
-    k1 = user_def_function(t0,x0);
-    k2 = user_def_function(t0 + (1/2)*h,x0+(1/2)*k1*h);
-    k3 = user_def_function(t0 + (1/2)*h,x0+(1/2)*k2*h);
-    k4 = user_def_function(t0+h,x0+k3*h);
+    k1 = user_def_function(t0, x0);
+    k2 = user_def_function(t0 + (1/2) * h, x0 + (1/2) * k1 * h);
+    k3 = user_def_function(t0 + (1/2)* h, x0 + (1/2) * k2 * h);
+    k4 = user_def_function(t0 + h, x0 + k3 * h);
     
     result = x0 + ((double)1/6)*(k1+2*k2+2*k3+k4)*h;
     //printf("k1=%f k2=%f k3=%f k4=%f result = %f\n", k1, k2, k3, k4, result);
