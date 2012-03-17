@@ -1,32 +1,40 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #define STABLE_CNT_MAX  50
-#define MAX_ITR         10000
+#define MAX_ITR         1000000
 
 double lambda;
 double mu;
 
-double user_def_function(double t0, double x0){
-    // lamda    - arriaval rate 
-    // mu       - service rate 
-    // x0 is initial value for first iteration. This serves as thetai for all the interations 
-    double result; 
-    // Function specific code goes here
-    result = lambda - mu * x0 / (x0+1);
+/*
+ * lamda    - arriaval rate
+ * mu       - service rate
+ * x_prev   - is the current value. This serves as thetai for all the interations 
+ */
+double user_def_function(double t0, double x_prev){
+    double x_next; 
+    
+    /*
+     * The differential equation for x_next
+     */
+    x_next = lambda - mu * x_prev / (x_prev + 1);
     //printf("user defined fn returns %f \n",result);
-    return result;
+    return x_next;
 }
 
-// This function calculates 
-// thetai + (1 / 6 ) * (k1 + 2*k2 + 2*k3 +k4)*h
-// the value is returned to be used as theta(i+1)
-// lamda    - arriaval rate 
-// mu       - service rate 
-// x0 is initial value for first iteration. This serves as thetai for all the interations 
-//t0    Initial time 
-// h    step size in which time increases
+/*
+ * This function calculates 
+ * thetai + (1 / 6 ) * (k1 + 2*k2 + 2*k3 +k4)*h
+ * the value is returned to be used as theta(i+1)
+ * lamda    - arriaval rate 
+ * mu       - service rate 
+ * x_prev is initial value for first iteration. This serves as thetai for all the interations 
+ * t0    Initial time 
+ * h    step size in which time increases
+ */
 double calc_next_value(double t0, double x0, double h)
 {
     double result;
@@ -47,13 +55,44 @@ double calc_next_value(double t0, double x0, double h)
     return result;
 }
 
+/*
+ * Round it to the 5th decimal point.
+ */
+#define MAX_PRECISION 10000000
+double roundit(double x)
+{
+    long tmp = x * MAX_PRECISION;
+    double result = ((double) tmp) / MAX_PRECISION;
+
+    return (result);
+}
+
+/*
+ * find_pn() : This routine returns the probability of n customers in the system
+ * given the current mean number of customers in the system.
+ *
+ * n - Number of customers for which we want to find the probability
+ * x - Current mean number of customers in the system.
+ *
+ * pn = u(t)^n * (1 - u(t)) where u(t) = x(t) / (x(t) + 1)
+ */
+double find_pn(double x, int n) 
+{
+    double res, ut;
+
+    ut = x / (x + 1);
+    res = (1 - ut) * (pow(ut, n)); 
+    return (res);
+}
+
 void usage(char *prog)
 {
-    printf("Usage : %s -h <h_val> -x <x0> -l <lambda_val> -u <mu_val>\n", prog);
+    printf("Usage : %s -h <h_val> -x <x0> -l <lambda_val> -u <mu_val> [-p n]\n", prog);
     printf(" -h <h_val>      : Where h_val is the integration step for Runge-Kutta method\n");
     printf(" -x <x0>         : Where x0 is the initial number of customers in the system at time t=0\n");
     printf(" -l <lambda_val> : Where lambda_val is the Poissonian incoming rate\n");
     printf(" -u <mu_val>     : Where mu_val is the Exponential service rate\n");
+    printf(" -p <n>          : Where n is the number of customers for which we need probability P(N=n)\n");
 }
 
 int main(int argc, char *argv[])
@@ -63,15 +102,15 @@ int main(int argc, char *argv[])
     double x0 = 0; 	// Initial mean number of customers at time t0
     double h = 1;
     double x1 = 0;
-    int i, opt, stable_cnt = 0;
+    int i, opt, stable_cnt = 0, n, pflag = 0;
 
-    if (argc != 9) {
+    if (argc != 9 && argc != 11) {
         printf("argc %d\n", argc);
         usage(argv[0]);
         return 1;
     }
 
-    while ((opt = getopt(argc, argv, ":h:x:l:u:")) != -1) {
+    while ((opt = getopt(argc, argv, ":h:x:l:u:p:")) != -1) {
         //printf("opt %c optarg %s\n", opt, optarg);
         switch (opt) {
             case 'h':
@@ -93,6 +132,10 @@ int main(int argc, char *argv[])
                 //printf("optarg %s mu = %f\n", optarg, mu);
                 //printf("val = %lf\n", strtod(optarg, NULL));
                 break;
+            case 'p':
+                pflag = 1;
+                n = atoi(optarg);
+                break;
             default:
                 usage(argv[0]);
                 return 1;
@@ -105,7 +148,11 @@ int main(int argc, char *argv[])
     printf("# Parameters for this plot\n");
     printf("# lambda = %lf mu = %f h = %f x0 = %f\n", lambda, mu, h, x0) ;
     printf("#\n");
-    printf("# time \t\tAvg-number-of-pkts\n");
+    if (pflag) {
+        printf("# time \t\tAvg-number-of-pkts\t\t P(n=%d)\n", n);
+    } else {
+        printf("# time \t\tAvg-number-of-pkts\n");
+    }
 
 
     /*
@@ -114,9 +161,15 @@ int main(int argc, char *argv[])
      */
     for(i = 0; i < MAX_ITR; i++) {
         x1 = calc_next_value(t0, x0, h);
-        printf("%f\t\t%f\n", t0, x1);
 
-        if (x0 == x1) {
+        if (pflag) {
+            printf("%lf\t\t%lf\t\t%lf\n", t0, x1, find_pn(x1, n));
+        } else {
+            printf("%lf\t\t%lf\n", t0, x1);
+        }
+
+        //printf("x0 = %f x1 = %f stable_cnt = %d\n", x0, x1, stable_cnt);
+        if (roundit(x0) == roundit(x1)) {
             stable_cnt++;
             if (stable_cnt >= STABLE_CNT_MAX) {
                 printf("Breaking early...\n");
