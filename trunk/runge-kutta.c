@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 #define STABLE_CNT_MAX  50
-#define MAX_ITR         1000000
+#define MAX_ITR         10000000
 
 double lambda;
 double mu;
@@ -155,6 +155,12 @@ int main(int argc, char *argv[])
     }
 
 
+        if (pflag) {
+            printf("%lf\t\t%.7f\t\t%lf\n", t0, x0, find_pn(x0, n));
+        } else {
+            printf("%lf\t\t%.7f\n", t0, x0);
+        }
+
     /*
      * This loop continues to calculate until the value of x stays stable for
      * STABLE_CNT_MAX iterations or upto MAX_ITR iterations.
@@ -163,12 +169,12 @@ int main(int argc, char *argv[])
         x1 = calc_next_value(t0, x0, h);
 
         if (pflag) {
-            printf("%lf\t\t%lf\t\t%lf\n", t0, x1, find_pn(x1, n));
+            printf("%lf\t\t%.7f\t\t%lf\n", t0, x1, find_pn(x1, n));
         } else {
-            printf("%lf\t\t%lf\n", t0, x1);
+            printf("%lf\t\t%.7f\n", t0, x1);
         }
 
-        //printf("x0 = %f x1 = %f stable_cnt = %d\n", x0, x1, stable_cnt);
+        //printf("iter %d x0 = %f x1 = %f stable_cnt = %d\n", i, x0, x1, stable_cnt);
         if (roundit(x0) == roundit(x1)) {
             stable_cnt++;
             if (stable_cnt >= STABLE_CNT_MAX) {
