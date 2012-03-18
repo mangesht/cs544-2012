@@ -1,0 +1,20 @@
+digraph runge_kutta {
+    input_args [shape=mrecord,style="rounded",label="Parse the input args to derive h,\nlambda, mu, x0 and pn"]
+    print_hdrs [shape=parallelogram,label="Print the headers with the input parameters"]
+    print_init_vals [shape=parallelogram,label="Print initial vals : t, x0\nand pn(if requested)"]
+
+    loop_begin [shape=record,label="Until the x(t) stays the same for \n\50 iterations or we iterate for MAX_ITR=10000000"]
+    calc_next_xval [shape=box,label="Using the runge-kutta method calculate\nthe next value of x ie.x_new"]
+    
+    print_vals [shape=parallelogram,label="Print the current vals of t, x_new\nand pn(if requested)"]
+
+    chk_stable [shape=diamond,label="if new value of x is the same as\nprev value of x for 50 iterations"]
+
+    set_next [shape=box, label="x_prev = x_new"]
+   
+    input_args -> print_hdrs -> print_init_vals -> loop_begin
+    loop_begin -> calc_next_xval -> print_vals -> chk_stable
+    chk_stable -> set_next [label="NO - continue with next iter"]
+    set_next -> calc_next_xval
+    chk_stable -> End
+}
