@@ -13,8 +13,8 @@ digraph runge_kutta {
     set_next [shape=box, label="x_prev = x_new"]
    
     input_args -> print_hdrs -> print_init_vals -> loop_begin
-    loop_begin -> calc_next_xval -> print_vals -> chk_stable
-    chk_stable -> set_next [label="NO - continue with next iter"]
-    set_next -> calc_next_xval
+    loop_begin -> calc_next_xval -> print_vals -> chk_stable:n
+    chk_stable:e -> set_next:w [label="NO - continue with next iter"]
+    set_next:e -> calc_next_xval:e
     chk_stable -> End
 }
