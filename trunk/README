@@ -15,6 +15,16 @@ The list of files submitted are :
     This program can be compiled using the following :
     - cc -o runge-kutta runge-kutta.c -lm
 
+    The program takes the following parameters :
+
+    Usage : ./runge-kutta -h <h_val> -x <x0> -l <lambda_val> -u <mu_val> [-p n]
+     -h <h_val>      : Where h_val is the integration step for Runge-Kutta method
+     -x <x0>         : Where x0 is the initial number of customers in the system at time t=0
+     -l <lambda_val> : Where lambda_val is the Poissonian incoming rate
+     -u <mu_val>     : Where mu_val is the Exponential service rate
+     -p <n>          : Where n is the number of customers for which we need probability P(N=n)
+
+
 - ans-q3-find-best-h.sh :
     This is a shell script which computes x(t) for different integration steps
     (ie. h = 3, 1, 0.01, 0.001, 0.0001). The output of these computations are fed
