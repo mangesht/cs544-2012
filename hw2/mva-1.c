@@ -17,6 +17,9 @@ double roundit(double x)
 
 #define Q 0
 #define U 1
+
+char workload_str[2] = {'U', 'Q'};
+
 /*
  * The Service-demand array.
  * Each row describes the service demand of one kind of workload. And each
@@ -28,8 +31,8 @@ double roundit(double x)
  * The "thinking-time" has been converted to service-demand 1/Z and added as the
  * last column.
  */
-float D[2][3] = {0.105,  0.18,   0.0,
-                0.375,  0.48,   0.24}; 
+float D[2][3] = {   0.375,  0.48,   0.24,   /* Service-demand for Update-txns */
+                    0.105,  0.18,   0.0};   /* Service-demand for Query-txns */
 
 
 /*
@@ -76,8 +79,8 @@ int main(int argc, char *argv[])
      *                          ....
      *                          (N[0],0),   (N[0],1),   (N[0],2),...    (N[0],N[1])   
      */
-    for (i = 0; i <= N[1]; i++) {
-        for (j = 0; j <= N[0]; j++) {
+    for (i = 0; i <= N[0]; i++) {
+        for (j = 0; j <= N[1]; j++) {
             /*
              * Handle special case of the first node and initialize it to zero.
              */
@@ -101,6 +104,13 @@ int main(int argc, char *argv[])
                 float sigmaR = 0, Xr = 0;
                 int Nr = 0;
 
+                /*
+                 * If there are no queries or updates then don't compute for
+                 * them.
+                 */
+                if ((w == 0 && i == 0) || (w == 1 && j == 0))
+                    continue;
+
                 switch (w) {
                 case 0 : ref_vec_i = i - 1;
                          ref_vec_j = j;
@@ -115,16 +125,21 @@ int main(int argc, char *argv[])
                     R[q][w] = D[w][q] * (1 + sum_of_row(ref_vec_i, ref_vec_j, q, nW));
                     sigmaR += R[q][w];
 
+                    /*
+                    printf("ref_vec_i = %d ref_vec_j= %d q = %d nW = %d sum = %lf\n",
+                            ref_vec_i, ref_vec_j, q, nW, sum_of_row(ref_vec_i, ref_vec_j, q, nW)); 
+                    printf("(%d, %d) D[%d][%d] = %lf sum\n", i, j, w, q, D[w][q]); 
                     printf("(%d, %d) R'[%d][%d] = %lf\n", i, j, q, w, R[q][w]); 
+                    */
                 }
 
                 Xr = Nr / sigmaR; 
-                printf("X%d = %lf\n", w, Xr);
+                printf("X%c(%d) = %lf\n", workload_str[w], Nr, Xr);
 
                 for (q = 0; q < nQ; q++) {
                     nodes[i][j].n[q][w] = Xr * R[q][w];
 
-                    printf("(%d, %d) n[%d][%d] = %lf\n", i, j, i, j, nodes[i][j].n[q][w]);
+                    printf("(%d, %d) n%d,%c = %lf\n", i, j, q+1, workload_str[w], nodes[i][j].n[q][w]);
                 }
             }
         }
