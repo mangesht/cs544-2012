@@ -3,20 +3,35 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/*
- * Round it to the 5th decimal point.
- */
-#define MAX_PRECISION 10000000
-double roundit(double x)
-{
-    long tmp = x * MAX_PRECISION;
-    double result = ((double) tmp) / MAX_PRECISION;
-
-    return (result);
-}
-
 #define Q 0
 #define U 1
+
+/*
+ * n[i,r] :
+ * i - Number of queue in the QN
+ * r - Types of workloads.
+ */
+typedef struct node {
+    float n[3][2];
+} node_t;
+
+/*
+ * Enum to describe the type of queue or resource.
+ */
+typedef enum res_type {
+    DELAY_RESOURCE,
+    QUEUEING_RESOURCE 
+} res_type_t;
+
+/*
+ * The following array describes the type of the resources in the QN.
+ */
+res_type_t res_type[3] = {QUEUEING_RESOURCE, QUEUEING_RESOURCE};
+
+/*
+ * Population vector.
+ */
+node_t nodes[1+1][1+3];
 
 char workload_str[2] = {'U', 'Q'};
 
@@ -34,20 +49,17 @@ char workload_str[2] = {'U', 'Q'};
 float D[2][3] = {   0.375,  0.48,   0.24,   /* Service-demand for Update-txns */
                     0.105,  0.18,   0.0};   /* Service-demand for Query-txns */
 
-
 /*
- * n[i,r] :
- * i - Number of queue in the QN
- * r - Types of workloads.
+ * Round it to the 5th decimal point.
  */
-typedef struct node {
-    float n[3][2];
-} node_t;
+#define MAX_PRECISION 10000000
+double roundit(double x)
+{
+    long tmp = x * MAX_PRECISION;
+    double result = ((double) tmp) / MAX_PRECISION;
 
-/*
- * Population vector.
- */
-node_t nodes[1+1][1+3];
+    return (result);
+}
 
 /*
  * Compute the sum of the given row 
@@ -108,8 +120,10 @@ int main(int argc, char *argv[])
                  * If there are no queries or updates then don't compute for
                  * them.
                  */
-                if ((w == 0 && i == 0) || (w == 1 && j == 0))
+                if ((w == 0 && i == 0) || (w == 1 && j == 0)) {
+                    nodes[i][j].n[q][w] = 0.0;
                     continue;
+                }
 
                 switch (w) {
                 case 0 : ref_vec_i = i - 1;
@@ -122,7 +136,12 @@ int main(int argc, char *argv[])
                 }
 
                 for (q = 0; q < nQ; q++) {
-                    R[q][w] = D[w][q] * (1 + sum_of_row(ref_vec_i, ref_vec_j, q, nW));
+                    if (res_type[q] == QUEUEING_RESOURCE) {
+                        R[q][w] = D[w][q] * (1 + sum_of_row(ref_vec_i, ref_vec_j, q, nW));
+                    } else {
+                        R[q][w] = D[w][q];
+                    }
+
                     sigmaR += R[q][w];
 
                     /*
