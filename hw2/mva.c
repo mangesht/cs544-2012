@@ -187,6 +187,8 @@ int main(int argc, char *argv[])
                     printf("\t\tR'%s,%s(%d,%d) = %lf\n", Q_str[q], workload_str[r], i, j, R[q][r]); 
                 }
 
+                printf("\t\tRo,%s(%d,%d) = %lf\n", workload_str[r], i, j, sigmaR); 
+
                 /*
                  * Compute the throughput X for this workload-class
                  */
@@ -203,7 +205,29 @@ int main(int argc, char *argv[])
                     printf("\t\tn%s,%s(%d,%d) = %lf\n", Q_str[q], workload_str[r], i, j, nodes[i][j].n[q][r]);
                 }
             }
+
+            /*
+             * Compute the Mean-number-of-customers-at-each-device.
+             */
+            for (q = 0; q < NUM_QUEUES; q++) {
+                printf("\tn%s(%d,%d) = %lf\n", Q_str[q], i, j, nodes[i][j].n[q][0] + nodes[i][j].n[q][1]);
+            }
         }
     }
+
+
+    printf("Q.3.a:Workload#2 throughput as a function of k for the population vector(20, k),k=0,1,2,3,...,15\n");
+    printf("k\tXo,w2\n");
+    for (i = 20, j = 0; j <= CLASS_2_POPLN; j++) {
+        printf("%d\t%lf\n", j, nodes[i][j].X[1]);
+    }
+
+    printf("Q.3.b:Mean number of Workload#1 customers at CPU as a func. of m for the population vector (m, 15), m=0,1,2,3,..., 20\n");
+    printf("m\tnCPU,w1\n");
+    for (i = 0, j = 15; i <= CLASS_1_POPLN; i++) {
+        printf("%d\t%lf\n", i, nodes[i][j].n[0][0]);
+    }
+
+
     return 0;
 }
